@@ -1312,3 +1312,42 @@ button {
   .landing__hero-text h1 { font-size: 36px; }
   .landing__section { padding: 48px 24px; }
 }
+
+/* Карточка с учётными данными после создания пользователя */
+.credentials-card {
+  background: var(--primary-50);
+  border: 1px solid var(--primary-200);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.credentials-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+  font-size: 13px;
+}
+.credentials-label {
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+.credentials-row code {
+  background: rgba(255, 255, 255, 0.7);
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  color: var(--primary-800);
+  font-size: 13px;
+  font-weight: 600;
+  user-select: all;
+}
+.credentials-pwd {
+  letter-spacing: 0.05em;
+}

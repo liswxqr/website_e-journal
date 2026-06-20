@@ -12,17 +12,35 @@ import type { Role, SchoolClass, User } from "@/types";
 const ROLES: { value: Role; label: string }[] = [
   { value: "admin", label: "Администратор" },
   { value: "teacher", label: "Преподаватель" },
-  { value: "student", label: "Ученик" },
+  { value: "student", label: "Студент" },
 ];
 
-const EMPTY: Omit<User, "id"> = {
+// Локальная форма редактирования (вкл. поле пароля, которого нет в типе User)
+interface UserForm extends Omit<User, "id"> {
+  id?: string;
+  password?: string;
+}
+
+const EMPTY: UserForm = {
   firstName: "",
   lastName: "",
   middleName: "",
   email: "",
   role: "student",
   groupId: undefined,
+  password: "",
 };
+
+// Генератор читаемого случайного пароля
+function generatePassword(length = 10): string {
+  // Без неоднозначных символов (0/O, 1/l/I)
+  const chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  let out = "";
+  const arr = new Uint32Array(length);
+  crypto.getRandomValues(arr);
+  for (let i = 0; i < length; i++) out += chars[arr[i] % chars.length];
+  return out;
+}
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -30,7 +48,10 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("");
-  const [editing, setEditing] = useState<(User | (Omit<User, "id"> & { id?: string })) | null>(null);
+  const [editing, setEditing] = useState<UserForm | null>(null);
+  const [credentials, setCredentials] = useState<{ user: User; password: string } | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const reload = () => {
     setLoading(true);
@@ -58,15 +79,43 @@ export default function UsersPage() {
 
   const classMap = new Map(classes.map((c) => [c.id, c]));
 
+  function startCreate() {
+    setError(null);
+    setEditing({ ...EMPTY, password: generatePassword() });
+  }
+
+  function startEdit(u: User) {
+    setError(null);
+    setEditing({ ...u, password: "" });
+  }
+
   async function save() {
     if (!editing) return;
-    if ("id" in editing && editing.id) {
-      await usersApi.updateUser(editing.id, editing);
-    } else {
-      await usersApi.createUser(editing);
+    setError(null);
+    setSaving(true);
+    try {
+      const isCreate = !editing.id;
+      if (isCreate) {
+        // Если поле пустое — бэк подставит дефолт. Лучше его заполнить.
+        const password = editing.password?.trim() || generatePassword();
+        const created = await usersApi.createUser({ ...editing, password } as any);
+        setEditing(null);
+        setCredentials({ user: created, password });
+      } else {
+        const payload: any = { ...editing };
+        if (!payload.password) delete payload.password; // не сбрасываем если пусто
+        await usersApi.updateUser(editing.id!, payload);
+        if (editing.password) {
+          setCredentials({ user: editing as unknown as User, password: editing.password });
+        }
+        setEditing(null);
+      }
+      reload();
+    } catch (e) {
+      setError((e as Error).message || "Не удалось сохранить");
+    } finally {
+      setSaving(false);
     }
-    setEditing(null);
-    reload();
   }
 
   async function remove(id: string) {
@@ -75,16 +124,23 @@ export default function UsersPage() {
     reload();
   }
 
+  function resetPassword() {
+    if (!editing) return;
+    setEditing({ ...editing, password: generatePassword() });
+  }
+
   if (loading) return <Loader />;
+
+  const isCreating = editing !== null && !editing.id;
 
   return (
     <>
       <div className="page-header">
         <div>
           <h1>Пользователи</h1>
-          <p>Управление администраторами, преподавателями и учениками.</p>
+          <p>Управление администраторами, преподавателями и студентами.</p>
         </div>
-        <Button onClick={() => setEditing({ ...EMPTY })}>+ Добавить пользователя</Button>
+        <Button onClick={startCreate}>+ Добавить пользователя</Button>
       </div>
 
       <div className="toolbar">
@@ -132,7 +188,7 @@ export default function UsersPage() {
                 </td>
                 <td>{u.groupId ? classMap.get(u.groupId)?.name ?? "—" : "—"}</td>
                 <td className="table__actions">
-                  <Button size="sm" variant="ghost" onClick={() => setEditing({ ...u })}>
+                  <Button size="sm" variant="ghost" onClick={() => startEdit(u)}>
                     Изменить
                   </Button>
                   <Button size="sm" variant="danger" onClick={() => remove(u.id)}>
@@ -145,14 +201,15 @@ export default function UsersPage() {
         </table>
       </div>
 
+      {/* Форма создания / редактирования */}
       <Modal
         open={editing !== null}
-        title={editing && "id" in editing && editing.id ? "Редактирование" : "Новый пользователь"}
+        title={isCreating ? "Новый пользователь" : "Редактирование"}
         onClose={() => setEditing(null)}
         footer={
           <>
             <Button variant="ghost" onClick={() => setEditing(null)}>Отмена</Button>
-            <Button onClick={save}>Сохранить</Button>
+            <Button onClick={save} disabled={saving}>{saving ? "Сохранение…" : "Сохранить"}</Button>
           </>
         }
       >
@@ -197,6 +254,76 @@ export default function UsersPage() {
                 />
               )}
             </div>
+
+            <div className="field">
+              <label className="field__label">
+                {isCreating ? "Пароль" : "Новый пароль (оставьте пустым, чтобы не менять)"}
+              </label>
+              <div className="row gap-12">
+                <input
+                  className="input flex-1"
+                  type="text"
+                  value={editing.password ?? ""}
+                  placeholder={isCreating ? "Будет сгенерирован" : "не менять"}
+                  onChange={(e) => setEditing({ ...editing, password: e.target.value })}
+                />
+                <Button type="button" variant="secondary" size="sm" onClick={resetPassword}>
+                  🎲 Сгенерировать
+                </Button>
+              </div>
+              <div className="field__hint">
+                Пароль показывается в открытом виде — после сохранения вы сможете его скопировать
+                и передать пользователю.
+              </div>
+            </div>
+
+            {error && (
+              <div style={{ background: "var(--danger-bg)", color: "var(--danger)", padding: 10, borderRadius: 8, fontSize: 13 }}>
+                {error}
+              </div>
+            )}
+          </>
+        )}
+      </Modal>
+
+      {/* Окно с учётными данными после создания / сброса */}
+      <Modal
+        open={!!credentials}
+        title={isCreating ? "Пользователь создан" : "Пароль обновлён"}
+        onClose={() => setCredentials(null)}
+        footer={
+          <Button onClick={() => setCredentials(null)}>Готово</Button>
+        }
+      >
+        {credentials && (
+          <>
+            <p style={{ marginBottom: 8 }}>
+              Передайте эти данные пользователю — пароль больше нигде не отобразится.
+            </p>
+            <div className="credentials-card">
+              <div className="credentials-row">
+                <span className="credentials-label">ФИО</span>
+                <span>{credentials.user.lastName} {credentials.user.firstName}</span>
+              </div>
+              <div className="credentials-row">
+                <span className="credentials-label">Email</span>
+                <code>{credentials.user.email}</code>
+              </div>
+              <div className="credentials-row">
+                <span className="credentials-label">Пароль</span>
+                <code className="credentials-pwd">{credentials.password}</code>
+              </div>
+            </div>
+            <Button
+              variant="secondary"
+              block
+              onClick={() => {
+                const text = `Email: ${credentials.user.email}\nПароль: ${credentials.password}`;
+                navigator.clipboard.writeText(text);
+              }}
+            >
+              📋 Скопировать в буфер обмена
+            </Button>
           </>
         )}
       </Modal>
