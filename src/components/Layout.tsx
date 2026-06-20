@@ -1,7 +1,22 @@
 import { ReactNode } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "@/context/ThemeContext";
 import type { Role } from "@/types";
+
+function ThemeToggle() {
+  const { theme, toggle } = useTheme();
+  return (
+    <button
+      className="theme-toggle"
+      onClick={toggle}
+      title={theme === "light" ? "Тёмная тема" : "Светлая тема"}
+      aria-label="Переключить тему"
+    >
+      {theme === "light" ? "🌙" : "☀️"}
+    </button>
+  );
+}
 
 interface NavItem {
   to: string;
@@ -32,13 +47,21 @@ const NAV: { section: string; items: NavItem[] }[] = [
       { to: "/teacher/groups", label: "Мои группы", icon: <Icon name="layers" />, roles: ["teacher"] },
       { to: "/teacher/gradebook", label: "Журнал оценок", icon: <Icon name="grid" />, roles: ["teacher"] },
       { to: "/teacher/attendance", label: "Посещаемость", icon: <Icon name="check" />, roles: ["teacher"] },
+      { to: "/homework", label: "Домашние задания", icon: <Icon name="book" />, roles: ["teacher"] },
     ],
   },
   {
     section: "Учёба",
     items: [
       { to: "/student/grades", label: "Мои оценки", icon: <Icon name="award" />, roles: ["student"] },
+      { to: "/homework", label: "Домашние задания", icon: <Icon name="book" />, roles: ["student"] },
       { to: "/student/attendance", label: "Посещаемость", icon: <Icon name="check" />, roles: ["student"] },
+    ],
+  },
+  {
+    section: "Аккаунт",
+    items: [
+      { to: "/profile", label: "Профиль", icon: <Icon name="user" />, roles: ["admin", "teacher", "student"] },
     ],
   },
 ];
@@ -121,6 +144,13 @@ function Icon({ name }: { name: string }) {
           <path d="M16 17l5-5-5-5M21 12H9" />
         </svg>
       );
+    case "user":
+      return (
+        <svg {...props}>
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+      );
     default:
       return null;
   }
@@ -142,6 +172,8 @@ function pageTitle(pathname: string): string {
     "/teacher/attendance": "Посещаемость",
     "/student/grades": "Мои оценки",
     "/student/attendance": "Посещаемость",
+    "/homework": "Домашние задания",
+    "/profile": "Профиль",
   };
   return map[pathname] ?? "Электронный журнал";
 }
@@ -185,7 +217,10 @@ export function Layout() {
       <header className="header">
         <div className="header__title">{pageTitle(location.pathname)}</div>
         <div className="header__user">
-          <div className="avatar">{initials.toUpperCase()}</div>
+          <ThemeToggle />
+          <NavLink to="/profile" className="avatar avatar--link" title="Профиль">
+            {initials.toUpperCase()}
+          </NavLink>
           <div className="user-meta">
             <span className="user-meta__name">
               {user.lastName} {user.firstName}

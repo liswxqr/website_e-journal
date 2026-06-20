@@ -30,3 +30,13 @@ export async function logout(): Promise<void> {
   if (!USE_MOCKS) return request<void>("/auth/logout", { method: "POST" });
   return delay(undefined, 60);
 }
+
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string
+): Promise<void> {
+  return request<void>("/auth/change-password", {
+    method: "POST",
+    body: { currentPassword, newPassword },
+  });
+}

@@ -9,6 +9,7 @@ import * as usersApi from "@/api/users";
 import * as gradesApi from "@/api/grades";
 import * as assessmentsApi from "@/api/assessments";
 import * as scheduleApi from "@/api/schedule";
+import { downloadCsv, printHtml } from "@/utils/export";
 import type {
   Assessment,
   Grade,
@@ -182,6 +183,54 @@ export default function GradebookPage() {
     }
   }
 
+  // === Экспорт ===
+  function exportMeta() {
+    const groupName = classes.find((c) => c.id === groupId)?.name ?? "";
+    const subjectName = subjects.find((s) => s.id === subjectId)?.name ?? "";
+    return { groupName, subjectName };
+  }
+
+  function buildGradeRows(): (string | number)[][] {
+    const header = ["Студент", ...dates.map((d) => `${d.slice(8, 10)}.${d.slice(5, 7)}`), "Средний"];
+    const body = groupStudents.map((s) => {
+      const row: (string | number)[] = [`${s.lastName} ${s.firstName}`];
+      for (const d of dates) {
+        const v = gradeFor(s.id, d)?.value;
+        row.push(v === "Н" ? "Н" : typeof v === "number" && v > 0 ? v : "");
+      }
+      row.push(average(s.id));
+      return row;
+    });
+    return [header, ...body];
+  }
+
+  function exportCsv() {
+    const { groupName, subjectName } = exportMeta();
+    downloadCsv(`Журнал_${groupName}_${subjectName}`, buildGradeRows());
+  }
+
+  function exportPdf() {
+    const { groupName, subjectName } = exportMeta();
+    const rows = buildGradeRows();
+    const head = rows[0]
+      .map((c, i) => `<th class="${i === 0 ? "name" : ""}">${c}</th>`)
+      .join("");
+    const bodyRows = rows
+      .slice(1)
+      .map(
+        (r) =>
+          "<tr>" +
+          r.map((c, i) => `<td class="${i === 0 ? "name" : ""}">${c}</td>`).join("") +
+          "</tr>"
+      )
+      .join("");
+    const html = `
+      <h1>Журнал оценок — группа ${groupName}</h1>
+      <div class="meta">Предмет: ${subjectName} · Дата формирования: ${new Date().toLocaleDateString("ru-RU")}</div>
+      <table><thead><tr>${head}</tr></thead><tbody>${bodyRows}</tbody></table>`;
+    printHtml(`Журнал ${groupName} ${subjectName}`, html);
+  }
+
   if (loading) return <Loader />;
 
   return (
@@ -202,6 +251,16 @@ export default function GradebookPage() {
         <Select label="Группа" value={groupId} onChange={(e) => setGroupId(e.target.value)} options={myGroupOptions} />
         <Select label="Предмет" value={subjectId} onChange={(e) => setSubjectId(e.target.value)} options={mySubjectOptions} />
         <div className="flex-1" />
+        {mode === "grades" && groupStudents.length > 0 && (
+          <div className="row gap-12">
+            <Button variant="secondary" size="sm" onClick={exportCsv} title="Скачать таблицу для Excel">
+              ⬇ Excel
+            </Button>
+            <Button variant="secondary" size="sm" onClick={exportPdf} title="Печать / сохранить в PDF">
+              🖨 PDF
+            </Button>
+          </div>
+        )}
         <div className="row gap-12">
           <Button variant={mode === "grades" ? "primary" : "ghost"} size="sm" onClick={() => setMode("grades")}>
             Оценки

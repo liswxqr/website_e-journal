@@ -11,6 +11,7 @@ import gradesRoutes from "./routes/grades.js";
 import assessmentsRoutes from "./routes/assessments.js";
 import attendanceRoutes from "./routes/attendance.js";
 import scheduleRoutes from "./routes/schedule.js";
+import homeworkRoutes from "./routes/homework.js";
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.use("/api/grades", gradesRoutes);
 app.use("/api/assessments", assessmentsRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/schedule", scheduleRoutes);
+app.use("/api/homework", homeworkRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

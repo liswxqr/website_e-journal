@@ -253,6 +253,49 @@ async function main() {
     },
   });
 
+  console.log("📚 Домашние задания...");
+  const inDays = (n: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() + n);
+    return d;
+  };
+  await prisma.homework.createMany({
+    data: [
+      {
+        groupId: groupBP21.id,
+        subjectId: subj("Математика").id,
+        teacherId: teacher.id,
+        title: "Решить задачи №12–18",
+        description: "Глава 3, страницы 45–47. Оформить с подробным решением.",
+        dueDate: inDays(3),
+      },
+      {
+        groupId: groupBP21.id,
+        subjectId: subj("Экономическая теория").id,
+        teacherId: teacher.id,
+        title: "Эссе «Спрос и предложение»",
+        description: "Объём 1–2 страницы, привести примеры из реальной экономики.",
+        dueDate: inDays(7),
+      },
+      {
+        groupId: groupEP22.id,
+        subjectId: subj("Математика").id,
+        teacherId: teacher.id,
+        title: "Контрольные примеры по производным",
+        description: null,
+        dueDate: inDays(2),
+      },
+      {
+        groupId: groupUR21.id,
+        subjectId: subj("Основы права").id,
+        teacherId: teacher.id,
+        title: "Конспект главы 2",
+        description: "Основные понятия и определения.",
+        dueDate: inDays(5),
+      },
+    ],
+  });
+
   console.log("\n✅ Готово!\n");
   console.log("Демо-доступы (пароль: 123456):");
   console.log("  Админ        — admin@college.by");

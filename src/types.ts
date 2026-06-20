@@ -77,6 +77,17 @@ export interface ScheduleEntry {
   room?: string | null;
 }
 
+export interface Homework {
+  id: string;
+  groupId: string;
+  subjectId: string;
+  teacherId: string;
+  title: string;
+  description?: string | null;
+  dueDate: string; // YYYY-MM-DD
+  createdAt?: string;
+}
+
 export interface AuthResponse {
   token: string;
   user: User;

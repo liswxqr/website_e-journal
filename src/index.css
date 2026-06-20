@@ -57,6 +57,34 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ============ Тёмная тема ============ */
+[data-theme="dark"] {
+  --primary-50: #1e293b;
+  --primary-100: #1e3a5f;
+  --primary-200: #25406b;
+
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface-2: #18233a;
+  --border: #334155;
+  --border-strong: #475569;
+
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  --text-soft: #64748b;
+
+  --success-bg: #052e23;
+  --warning-bg: #3b2f0a;
+  --danger-bg: #3b1212;
+  --info-bg: #07263a;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.45);
+  color: var(--text);
+  background: var(--bg);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -1350,4 +1378,134 @@ button {
 }
 .credentials-pwd {
   letter-spacing: 0.05em;
+}
+
+/* ============ Переключатель темы ============ */
+.theme-toggle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 17px;
+  display: grid;
+  place-items: center;
+  transition: 0.15s;
+  line-height: 1;
+}
+.theme-toggle:hover {
+  background: var(--surface-2);
+  border-color: var(--primary-400);
+}
+.avatar--link {
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.avatar--link:hover {
+  transform: scale(1.06);
+  text-decoration: none;
+}
+.avatar--lg {
+  width: 64px;
+  height: 64px;
+  font-size: 22px;
+}
+
+/* ============ Домашние задания ============ */
+.hw-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+.hw-card__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.hw-card__title {
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+.hw-card__desc {
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+.hw-card__foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  margin-top: auto;
+}
+.hw-link {
+  background: none;
+  border: none;
+  color: var(--primary-600);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 0;
+}
+.hw-link:hover {
+  text-decoration: underline;
+}
+.hw-link--danger {
+  color: var(--danger);
+}
+
+/* ============ Профиль ============ */
+.profile-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 18px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+.profile-name {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.profile-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.profile-field {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  font-size: 14px;
+  align-items: center;
+}
+.profile-field__label {
+  color: var(--text-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+/* В тёмной теме градиентные акценты приглушаем */
+[data-theme="dark"] .sidebar {
+  background: linear-gradient(180deg, #16223c, #0d1626);
+}
+[data-theme="dark"] .stat::before {
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.06), transparent);
+}
+[data-theme="dark"] .table tbody tr:hover {
+  background: var(--surface-2);
+}
+[data-theme="dark"] .login-card,
+[data-theme="dark"] .landing-feature-card,
+[data-theme="dark"] .landing-role-card {
+  background: var(--surface);
 }

@@ -7,6 +7,8 @@ import Landing from "@/pages/Landing";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 import SchedulePage from "@/pages/SchedulePage";
+import HomeworkPage from "@/pages/HomeworkPage";
+import ProfilePage from "@/pages/ProfilePage";
 
 import UsersPage from "@/pages/admin/UsersPage";
 import SubjectsPage from "@/pages/admin/SubjectsPage";
@@ -36,6 +38,8 @@ export default function App() {
           >
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/schedule" element={<SchedulePage />} />
+            <Route path="/homework" element={<HomeworkPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
 
             {/* admin */}
             <Route
