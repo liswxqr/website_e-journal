@@ -4,11 +4,13 @@ import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { Badge } from "@/components/ui/Badge";
 import { Loader } from "@/components/ui/Loader";
+import { Select } from "@/components/ui/Select";
 import * as subjectsApi from "@/api/subjects";
 import * as usersApi from "@/api/users";
 import type { Subject, User } from "@/types";
+import { STREAMS, streamLabel } from "@/types";
 
-const EMPTY: Omit<Subject, "id"> = { name: "", description: "", teacherIds: [] };
+const EMPTY: Omit<Subject, "id"> = { name: "", description: "", stream: null, teacherIds: [] };
 
 export default function SubjectsPage() {
   const [items, setItems] = useState<Subject[]>([]);
@@ -59,6 +61,7 @@ export default function SubjectsPage() {
           <thead>
             <tr>
               <th>Название</th>
+              <th>Поток</th>
               <th>Описание</th>
               <th>Преподаватели</th>
               <th style={{ textAlign: "right" }}>Действия</th>
@@ -67,12 +70,17 @@ export default function SubjectsPage() {
           <tbody>
             {items.length === 0 && (
               <tr>
-                <td colSpan={4} className="empty">Нет предметов</td>
+                <td colSpan={5} className="empty">Нет предметов</td>
               </tr>
             )}
             {items.map((s) => (
               <tr key={s.id}>
                 <td><strong>{s.name}</strong></td>
+                <td>
+                  <Badge variant={s.stream ? "primary" : "neutral"}>
+                    {s.stream ? streamLabel(s.stream) : "общий"}
+                  </Badge>
+                </td>
                 <td className="muted">{s.description || "—"}</td>
                 <td>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -114,6 +122,17 @@ export default function SubjectsPage() {
               label="Название"
               value={editing.name}
               onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+            />
+            <Select
+              label="Поток (специальность)"
+              value={editing.stream ?? ""}
+              onChange={(e) =>
+                setEditing({ ...editing, stream: (e.target.value || null) as Subject["stream"] })
+              }
+              options={[
+                { value: "", label: "Общий (для всех потоков)" },
+                ...STREAMS.map((s) => ({ value: s.value, label: `${s.label} — ${s.full}` })),
+              ]}
             />
             <div className="field">
               <label className="field__label">Описание</label>

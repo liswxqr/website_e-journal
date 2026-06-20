@@ -8,6 +8,7 @@ import { Loader } from "@/components/ui/Loader";
 import * as usersApi from "@/api/users";
 import * as classesApi from "@/api/classes";
 import type { Role, SchoolClass, User } from "@/types";
+import { STREAMS, streamLabel } from "@/types";
 
 const ROLES: { value: Role; label: string }[] = [
   { value: "admin", label: "Администратор" },
@@ -164,13 +165,14 @@ export default function UsersPage() {
               <th>Email</th>
               <th>Роль</th>
               <th>Группа</th>
+              <th>Поток</th>
               <th style={{ textAlign: "right" }}>Действия</th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={5} className="empty">Ничего не найдено</td>
+                <td colSpan={6} className="empty">Ничего не найдено</td>
               </tr>
             )}
             {filtered.map((u) => (
@@ -187,6 +189,13 @@ export default function UsersPage() {
                   </Badge>
                 </td>
                 <td>{u.groupId ? classMap.get(u.groupId)?.name ?? "—" : "—"}</td>
+                <td>
+                  {u.role === "student" && u.stream ? (
+                    <Badge variant="primary">{streamLabel(u.stream)}</Badge>
+                  ) : (
+                    <span className="muted">—</span>
+                  )}
+                </td>
                 <td className="table__actions">
                   <Button size="sm" variant="ghost" onClick={() => startEdit(u)}>
                     Изменить
@@ -254,6 +263,20 @@ export default function UsersPage() {
                 />
               )}
             </div>
+
+            {editing.role === "student" && (
+              <Select
+                label="Поток (специальность)"
+                value={editing.stream ?? ""}
+                onChange={(e) =>
+                  setEditing({ ...editing, stream: (e.target.value || undefined) as UserForm["stream"] })
+                }
+                options={[
+                  { value: "", label: "— не выбран —" },
+                  ...STREAMS.map((s) => ({ value: s.value, label: `${s.label} — ${s.full}` })),
+                ]}
+              />
+            )}
 
             <div className="field">
               <label className="field__label">

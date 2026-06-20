@@ -1,5 +1,21 @@
 export type Role = "admin" | "teacher" | "student";
 
+// Поток (специальность) студента
+export type Stream = "poit" | "jurist" | "economist";
+
+export const STREAMS: { value: Stream; label: string; full: string }[] = [
+  { value: "poit", label: "ПОИТ", full: "Программное обеспечение информационных технологий" },
+  { value: "jurist", label: "Юрист", full: "Правоведение" },
+  { value: "economist", label: "Экономист", full: "Экономика и бухгалтерский учёт" },
+];
+
+export function streamLabel(s?: Stream | null): string {
+  return STREAMS.find((x) => x.value === s)?.label ?? "—";
+}
+export function streamFull(s?: Stream | null): string {
+  return STREAMS.find((x) => x.value === s)?.full ?? "";
+}
+
 export interface User {
   id: string;
   firstName: string;
@@ -8,6 +24,7 @@ export interface User {
   email: string;
   role: Role;
   groupId?: string | null;
+  stream?: Stream | null;
   subjectIds?: string[];
 }
 
@@ -15,6 +32,7 @@ export interface Subject {
   id: string;
   name: string;
   description?: string | null;
+  stream?: Stream | null;
   teacherIds: string[];
 }
 

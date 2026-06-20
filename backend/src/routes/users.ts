@@ -45,6 +45,7 @@ const createSchema = z.object({
   email: z.string().email(),
   role: z.enum(["admin", "teacher", "student"]),
   groupId: z.string().optional().nullable(),
+  stream: z.enum(["poit", "jurist", "economist"]).optional().nullable(),
   subjectIds: z.array(z.string()).optional(),
   password: z.string().min(4).optional(),
 });
@@ -62,6 +63,7 @@ router.post("/", requireRole("admin"), async (req, res, next) => {
         role: data.role,
         passwordHash,
         groupId: data.role === "student" ? data.groupId ?? null : null,
+        stream: data.role === "student" ? data.stream ?? null : null,
         taughtSubjects:
           data.role === "teacher" && data.subjectIds?.length
             ? {
@@ -94,6 +96,12 @@ router.patch("/:id", requireRole("admin"), async (req, res, next) => {
         groupId:
           data.role === "student"
             ? data.groupId ?? undefined
+            : data.role
+            ? null
+            : undefined,
+        stream:
+          data.role === "student"
+            ? data.stream ?? undefined
             : data.role
             ? null
             : undefined,

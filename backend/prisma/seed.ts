@@ -23,17 +23,24 @@ async function main() {
   console.log("📚 Предметы...");
   const subjects = await Promise.all(
     [
-      "Математика",
-      "Информатика",
-      "Основы права",
-      "Экономическая теория",
-      "Бухгалтерский учёт",
-      "Менеджмент",
-      "Конституционное право",
-      "Гражданское право",
-      "Деловой английский",
-      "Физическая культура",
-    ].map((name) => prisma.subject.create({ data: { name } }))
+      // Общие для всех потоков
+      { name: "Математика", stream: null },
+      { name: "Деловой английский", stream: null },
+      { name: "Физическая культура", stream: null },
+      // Поток ПОИТ (программисты)
+      { name: "Информатика", stream: "poit" },
+      { name: "Программирование", stream: "poit" },
+      { name: "Базы данных", stream: "poit" },
+      { name: "Операционные системы", stream: "poit" },
+      // Поток Юрист
+      { name: "Основы права", stream: "jurist" },
+      { name: "Конституционное право", stream: "jurist" },
+      { name: "Гражданское право", stream: "jurist" },
+      // Поток Экономист
+      { name: "Экономическая теория", stream: "economist" },
+      { name: "Бухгалтерский учёт", stream: "economist" },
+      { name: "Менеджмент", stream: "economist" },
+    ].map((s) => prisma.subject.create({ data: s }))
   );
 
   const subj = (n: string) => subjects.find((s) => s.name === n)!;
@@ -88,7 +95,7 @@ async function main() {
     data: { name: "ЮР-21", year: 2 }, // Юриспруденция, 2 курс
   });
 
-  console.log("🎓 Студенты (по одному в каждой группе для проверки прав)...");
+  console.log("🎓 Студенты (по одному в каждом потоке для проверки прав)...");
   const studentBP = await prisma.user.create({
     data: {
       firstName: "Алексей",
@@ -98,6 +105,7 @@ async function main() {
       passwordHash,
       role: "student",
       groupId: groupBP21.id,
+      stream: "poit", // ПОИТ
     },
   });
   const studentEP = await prisma.user.create({
@@ -109,6 +117,7 @@ async function main() {
       passwordHash,
       role: "student",
       groupId: groupEP22.id,
+      stream: "economist", // Экономист
     },
   });
   const studentUR = await prisma.user.create({
@@ -120,18 +129,19 @@ async function main() {
       passwordHash,
       role: "student",
       groupId: groupUR21.id,
+      stream: "jurist", // Юрист
     },
   });
 
   // Доп. одногруппники чтобы журналы не были пустыми
   console.log("👥 Доп. одногруппники...");
   const moreStudents = [
-    { firstName: "Полина", lastName: "Лебедева", groupId: groupBP21.id, email: "lebedeva@college.by" },
-    { firstName: "Артём", lastName: "Зайцев", groupId: groupBP21.id, email: "zaytsev@college.by" },
-    { firstName: "Елизавета", lastName: "Орлова", groupId: groupEP22.id, email: "orlova@college.by" },
-    { firstName: "Кирилл", lastName: "Новиков", groupId: groupEP22.id, email: "novikov@college.by" },
-    { firstName: "София", lastName: "Богданова", groupId: groupUR21.id, email: "bogdanova@college.by" },
-    { firstName: "Максим", lastName: "Романов", groupId: groupUR21.id, email: "romanov@college.by" },
+    { firstName: "Полина", lastName: "Лебедева", groupId: groupBP21.id, email: "lebedeva@college.by", stream: "poit" },
+    { firstName: "Артём", lastName: "Зайцев", groupId: groupBP21.id, email: "zaytsev@college.by", stream: "poit" },
+    { firstName: "Елизавета", lastName: "Орлова", groupId: groupEP22.id, email: "orlova@college.by", stream: "economist" },
+    { firstName: "Кирилл", lastName: "Новиков", groupId: groupEP22.id, email: "novikov@college.by", stream: "economist" },
+    { firstName: "София", lastName: "Богданова", groupId: groupUR21.id, email: "bogdanova@college.by", stream: "jurist" },
+    { firstName: "Максим", lastName: "Романов", groupId: groupUR21.id, email: "romanov@college.by", stream: "jurist" },
   ];
   for (const s of moreStudents) {
     await prisma.user.create({

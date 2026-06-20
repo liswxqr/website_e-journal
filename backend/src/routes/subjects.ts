@@ -17,6 +17,7 @@ router.get("/", async (_req, res, next) => {
         id: s.id,
         name: s.name,
         description: s.description,
+        stream: s.stream,
         teacherIds: s.teachers.map((t) => t.teacherId),
       }))
     );
@@ -28,6 +29,7 @@ router.get("/", async (_req, res, next) => {
 const schema = z.object({
   name: z.string().min(1),
   description: z.string().optional().nullable(),
+  stream: z.enum(["poit", "jurist", "economist"]).optional().nullable(),
   teacherIds: z.array(z.string()).default([]),
 });
 
@@ -38,6 +40,7 @@ router.post("/", requireRole("admin"), async (req, res, next) => {
       data: {
         name: data.name,
         description: data.description ?? null,
+        stream: data.stream ?? null,
         teachers: { create: data.teacherIds.map((teacherId) => ({ teacherId })) },
       },
       include: { teachers: true },
@@ -46,6 +49,7 @@ router.post("/", requireRole("admin"), async (req, res, next) => {
       id: created.id,
       name: created.name,
       description: created.description,
+      stream: created.stream,
       teacherIds: created.teachers.map((t) => t.teacherId),
     });
   } catch (e) {
@@ -61,6 +65,7 @@ router.patch("/:id", requireRole("admin"), async (req, res, next) => {
       data: {
         name: data.name,
         description: data.description ?? undefined,
+        stream: data.stream === undefined ? undefined : data.stream,
       },
     });
     if (data.teacherIds) {
@@ -79,6 +84,7 @@ router.patch("/:id", requireRole("admin"), async (req, res, next) => {
       id: full!.id,
       name: full!.name,
       description: full!.description,
+      stream: full!.stream,
       teacherIds: full!.teachers.map((t) => t.teacherId),
     });
   } catch (e) {

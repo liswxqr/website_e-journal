@@ -1,10 +1,14 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import * as authApi from "@/api/auth";
+import * as subjectsApi from "@/api/subjects";
+import * as classesApi from "@/api/classes";
+import { streamLabel, streamFull } from "@/types";
+import type { Subject, SchoolClass } from "@/types";
 
 function roleLabel(r: string) {
   return r === "admin" ? "Администратор" : r === "teacher" ? "Преподаватель" : "Студент";
@@ -17,8 +21,24 @@ export default function ProfilePage() {
   const [confirm, setConfirm] = useState("");
   const [status, setStatus] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [saving, setSaving] = useState(false);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [groups, setGroups] = useState<SchoolClass[]>([]);
+
+  useEffect(() => {
+    if (user?.role !== "student") return;
+    Promise.all([subjectsApi.listSubjects(), classesApi.listClasses()]).then(([s, g]) => {
+      setSubjects(s);
+      setGroups(g);
+    });
+  }, [user]);
 
   if (!user) return null;
+
+  // Предметы потока: предметы выбранного потока + общие (stream = null)
+  const streamSubjects = subjects.filter(
+    (s) => (user.stream && s.stream === user.stream) || !s.stream
+  );
+  const groupName = user.groupId ? groups.find((g) => g.id === user.groupId)?.name : null;
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -81,6 +101,24 @@ export default function ProfilePage() {
               <span className="profile-field__label">Роль</span>
               <span>{roleLabel(user.role)}</span>
             </div>
+            {user.role === "student" && (
+              <>
+                <div className="profile-field">
+                  <span className="profile-field__label">Группа</span>
+                  <span>{groupName ?? "—"}</span>
+                </div>
+                <div className="profile-field">
+                  <span className="profile-field__label">Поток</span>
+                  <span>
+                    {user.stream ? (
+                      <Badge variant="primary">{streamLabel(user.stream)}</Badge>
+                    ) : (
+                      "—"
+                    )}
+                  </span>
+                </div>
+              </>
+            )}
             <div className="profile-field">
               <span className="profile-field__label">ID</span>
               <code style={{ fontSize: 12 }}>{user.id}</code>
@@ -135,6 +173,44 @@ export default function ProfilePage() {
           </form>
         </Card>
       </div>
+
+      {user.role === "student" && (
+        <div className="mt-24">
+          <Card
+            title={
+              <span>
+                Предметы потока{" "}
+                {user.stream && <Badge variant="primary">{streamLabel(user.stream)}</Badge>}
+              </span>
+            }
+          >
+            {!user.stream ? (
+              <div className="empty">
+                Поток не назначен. Обратитесь к администратору, чтобы выбрать специальность.
+              </div>
+            ) : (
+              <>
+                <p style={{ fontSize: 13, marginBottom: 14 }}>
+                  {streamFull(user.stream)}. Дисциплины вашей специальности и общие предметы:
+                </p>
+                <div className="stream-subjects">
+                  {streamSubjects.map((s) => (
+                    <div key={s.id} className="stream-subject">
+                      <span className="stream-subject__name">{s.name}</span>
+                      <Badge variant={s.stream ? "primary" : "neutral"}>
+                        {s.stream ? streamLabel(s.stream) : "общий"}
+                      </Badge>
+                    </div>
+                  ))}
+                  {streamSubjects.length === 0 && (
+                    <div className="empty">Предметы не заданы.</div>
+                  )}
+                </div>
+              </>
+            )}
+          </Card>
+        </div>
+      )}
     </>
   );
 }
